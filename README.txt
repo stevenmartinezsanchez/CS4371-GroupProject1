@@ -36,6 +36,94 @@ For testing, create consumers in separate terminals(inside the kafka directory):
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic bsky-posts
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic entities-counts
 
+Part 1 - Visualization (ELK Stack)
+
+In WSL:
+
+# 1. Download these 3 files in your browser to your Downloads folder:
+
+https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-9.5.6-linux-x86_64.tar.gz
+https://artifacts.elastic.co/downloads/kibana/kibana-9.5.6-linux-x86_64.tar.gz
+https://artifacts.elastic.co/downloads/logstash/logstash-9.5.6-linux-x86_64.tar.gz
+
+Then extract them into your project folder:
+
+cd PROJECT_FOLDER
+tar -xzf /mnt/c/Users/YOUR_WINDOWS_NAME/Downloads/elasticsearch-9.5.6-linux-x86_64.tar.gz
+tar -xzf /mnt/c/Users/YOUR_WINDOWS_NAME/Downloads/kibana-9.5.6-linux-x86_64.tar.gz
+tar -xzf /mnt/c/Users/YOUR_WINDOWS_NAME/Downloads/logstash-9.5.6-linux-x86_64.tar.gz
+
+
+# 2. Set Up Elasticsearch
+
+cd PROJECT_FOLDER
+echo "xpack.security.enabled: false" >> elasticsearch-9.5.6/config/elasticsearch.yml
+echo "discovery.type: single-node" >> elasticsearch-9.5.6/config/elasticsearch.yml
+printf -- "-Xms1g\n-Xmx1g\n" > elasticsearch-9.5.6/config/jvm.options.d/heap.options
+
+
+# 3. Start Elasticsearch (new WSL window, leave it running)
+
+cd PROJECT_FOLDER
+elasticsearch-9.5.6/bin/elasticsearch
+
+Wait a bit before the next step.
+
+
+# 4. Start Kibana (new WSL window, leave it running)
+
+cd PROJECT_FOLDER
+kibana-9.5.6/bin/kibana
+
+
+# 5. Start Logstash (new WSL window, leave it running)
+
+cd PROJECT_FOLDER
+logstash-9.5.6/bin/logstash -f "$(pwd)/logstash.conf"
+
+
+In your browser:
+
+# 6. Open Kibana
+
+Go to http://localhost:5601 and click "Explore on my own".
+
+
+# 7. Create the Data View
+
+Menu (top left) -> Stack Management -> Data Views -> Create data view
+Name and index pattern: entity-counts
+Timestamp field: I don't want to use the time filter
+Save data view to Kibana
+
+
+# 8. Build the Bar Chart
+
+Menu -> Visualize Library -> Create visualization -> Visualization
+Chart type: Bar horizontal
+Add field -> Top values -> entity.keyword -> 10 values
+          -> Rank by: Maximum of count
+          -> turn off "Group remaining values as Other" -> Close
+Add field -> Maximum -> count -> Close
+
+
+# 9. Filter Out Junk
+
+Paste into the search bar at the top and press Enter:
+
+not entity.keyword : ("1" or "2" or "3" or "4" or "5" or "6" or "7" or "8" or "9" or "10" or "one" or "two" or "three" or "four" or "five" or "six" or "seven" or "eight" or "nine" or "ten" or "#" or "today" or "tonight" or "tomorrow" or "yesterday" or "first" or "second")
+
+To remove any other junk bar: click it -> Filter out value.
+
+
+# 10. Save
+
+Save -> Title: Top 10 Named Entities -> Add to dashboard: None
+     -> tick "Add to library" -> Save
+
+Click Refresh (top right) to see the latest counts.
+
+
 
 Part 2: Text classification of streamed text with PySpark
 
