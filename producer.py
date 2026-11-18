@@ -49,7 +49,7 @@ async def listen():
                                     producer.poll(0) 
                                 
                         # ASYNC sleep to prevent blocking the websocket
-                        await asyncio.sleep(0.1) 
+                        await asyncio.sleep(0) 
 
                     except json.JSONDecodeError:
                         continue # Skip malformed frames
